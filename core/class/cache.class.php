@@ -359,6 +359,38 @@ class cache {
 			}
 		}
 	}
+	
+	public static function cleanCacheHttpJson() {
+		if (config::byKey('cache::engine') != 'FilesystemCache') {
+			return;
+		}
+		$re = '/s:\d*:(.*?);s:\d*:"(.*?)";s/';
+		$result = array();
+		foreach (ls(self::getFolder()) as $folder) {
+			foreach (ls(self::getFolder() . '/' . $folder) as $file) {
+				$path = self::getFolder() . '/' . $folder . '/' . $file;
+				if (strpos($file, 'swap') !== false) {
+					unlink($path);
+					continue;
+				}
+				$str = (string) str_replace("\n", '', file_get_contents($path));
+				preg_match_all($re, $str, $matches);
+				if (!isset($matches[2]) || !isset($matches[2][0]) || trim($matches[2][0]) == '') {
+					continue;
+				}
+				$result[] = $matches[2][0];
+			}
+		}
+		foreach ($result as $key) {
+			$matches = null;
+			log::add('cache', 'debug', 'Adil ' . $key);
+			if (strpos($key, 'cacheHttpJson') !== false) {
+				log::add('cache', 'debug', 'Adil trouve');
+				cache::delete($key);
+				continue;
+			}
+		}
+	}
 
 	/*     * *********************Methode d'instance************************* */
 
